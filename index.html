@@ -432,33 +432,25 @@ textarea {
   -webkit-text-fill-color: var(--pink);
 }
 
-/* ===== MULTI IMAGE GRID ===== */
-/* 保存前プレビュー：枚数でグリッド列数を変化 */
+/* ===== MULTI IMAGE LIST ===== */
+/* 保存前プレビュー：縦一列 */
 .current-images-wrap {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin-top: 12px;
-  grid-template-columns: repeat(3, 1fr); /* デフォルト 3列 */
 }
-.current-images-wrap[data-count="1"] { grid-template-columns: 1fr; }
-.current-images-wrap[data-count="2"] { grid-template-columns: 1fr 1fr; }
-
 .current-img-item {
   position: relative;
 }
 .current-img-item img {
   width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
+  height: auto;
   border-radius: 10px;
   border: 1.5px solid rgba(16,185,129,0.4);
   cursor: pointer;
   display: block;
   box-shadow: var(--glow-emerald);
-}
-/* 1枚だけの場合は横長で表示 */
-.current-images-wrap[data-count="1"] .current-img-item img {
-  aspect-ratio: 16 / 9;
 }
 .current-img-remove {
   position: absolute;
@@ -478,15 +470,13 @@ textarea {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-/* 履歴サムネイル：枚数でグリッド列数を変化 */
+/* 履歴サムネイル：縦一列 */
 .hist-thumbs {
-  display: grid;
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 8px;
-  grid-template-columns: repeat(3, 1fr); /* デフォルト 3列 */
 }
-.hist-thumbs[data-count="1"] { grid-template-columns: 1fr; }
-.hist-thumbs[data-count="2"] { grid-template-columns: 1fr 1fr; }
 
 /* ===== INLINE HISTORY ===== */
 .hist-section {
@@ -556,17 +546,12 @@ textarea {
 }
 .hist-thumb {
   width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
+  height: auto;
   border-radius: 8px;
   cursor: pointer;
   border: 1px solid rgba(16,185,129,0.3);
   display: block;
   box-shadow: var(--glow-emerald);
-}
-/* 1枚だけの場合は横長で表示 */
-.hist-thumbs[data-count="1"] .hist-thumb {
-  aspect-ratio: 16 / 9;
 }
 .hist-actions {
   display: flex;
@@ -1224,12 +1209,7 @@ function clearImages() {
 
 function renderCurrentImages() {
   const wrap = document.getElementById('currentImagesWrap');
-  if (!currentImages.length) {
-    wrap.removeAttribute('data-count');
-    wrap.innerHTML = '';
-    return;
-  }
-  wrap.setAttribute('data-count', Math.min(currentImages.length, 6));
+  if (!currentImages.length) { wrap.innerHTML = ''; return; }
   wrap.innerHTML = currentImages.map((src, i) => `
     <div class="current-img-item">
       <img src="${src}" alt="画像${i+1}" onclick="openModal('${src.replace(/'/g,"\\'")}')">
@@ -1322,7 +1302,7 @@ function renderMemoHistory() {
     const imgs = e.images && e.images.length ? e.images
                : e.image ? [e.image] : [];
     const thumbs = imgs.length
-      ? `<div class="hist-thumbs" data-count="${Math.min(imgs.length, 6)}">${imgs.map(src =>
+      ? `<div class="hist-thumbs">${imgs.map(src =>
           `<img class="hist-thumb" src="${src}" alt="画像"
                onclick="openModal('${src.replace(/'/g,"\\'")}')
                ">`).join('')}</div>`
