@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Galaxy計算">
+<meta name="theme-color" content="#6b21a8">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>Percentage calculation memo</title>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --pink: #ec4899;
+  --purple: #7c3aed;
+  --deep-purple: #4c1d95;
+  --emerald: #10b981;
+  --cyan: #06b6d4;
+  --blue: #3b82f6;
+  --bg: #0a0015;
+  --card-bg: rgba(15, 5, 30, 0.85);
+  --text: #f0e6ff;
+  --text-dim: #a78bfa;
+  --glow-pink: 0 0 20px rgba(236,72,153,0.5), 0 0 40px rgba(236,72,153,0.2);
+  --glow-emerald: 0 0 20px rgba(16,185,129,0.5), 0 0 40px rgba(16,185,129,0.2);
+  --glow-purple: 0 0 20px rgba(124,58,237,0.5), 0 0 40px rgba(124,58,237,0.2);
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* ===== GALAXY BACKGROUND ===== */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(124,58,237,0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(16,185,129,0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(236,72,153,0.15) 0%, transparent 60%),
+    linear-gradient(135deg, #0a0015 0%, #0d0025 50%, #050a20 100%);
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* Stars */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 40%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 40% 10%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 70%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 25%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 85% 55%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 80%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 90%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(2px 2px at 35% 60%, rgba(236,72,153,0.8) 0%, transparent 100%),
+    radial-gradient(2px 2px at 75% 45%, rgba(16,185,129,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 50% 30%, rgba(124,58,237,0.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 20% 55%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 85%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 70%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 5% 45%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 95% 35%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 65% 5%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 95%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88% 88%, rgba(255,255,255,0.8) 0%, transparent 100%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ===== LAYOUT ===== */
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 12px 12px 80px;
+}
+
+/* ===== HEADER ===== */
+.header {
+  text-align: center;
+  padding: 20px 0 16px;
+}
+.header h1 {
+  font-size: 26px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--pink), var(--purple), var(--emerald));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 8px rgba(236,72,153,0.6));
+}
+.pwa-status {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.pwa-status.active {
+  background: rgba(16,185,129,0.2);
+  border: 1px solid var(--emerald);
+  color: var(--emerald);
+  box-shadow: var(--glow-emerald);
+}
+.pwa-status.browser {
+  background: rgba(124,58,237,0.2);
+  border: 1px solid var(--purple);
+  color: #c4b5fd;
+}
+
+/* ===== CARD ===== */
+.card {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(124,58,237,0.3);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.05em;
+}
+.card-title .icon { font-size: 20px; }
+
+.card-percent { box-shadow: 0 4px 30px rgba(0,0,0,0.4), 0 0 30px rgba(236,72,153,0.1); }
+.card-percent .card-title { color: var(--pink); filter: drop-shadow(0 0 6px rgba(236,72,153,0.7)); }
+
+.card-calc { box-shadow: 0 4px 30px rgba(0,0,0,0.4), 0 0 30px rgba(124,58,237,0.1); }
+.card-calc .card-title { color: #c4b5fd; filter: drop-shadow(0 0 6px rgba(124,58,237,0.7)); }
+
+.card-memo { box-shadow: 0 4px 30px rgba(0,0,0,0.4), 0 0 30px rgba(16,185,129,0.1); }
+.card-memo .card-title { color: var(--emerald); filter: drop-shadow(0 0 6px rgba(16,185,129,0.7)); }
+
+/* ===== INPUTS ===== */
+input[type="number"],
+input[type="text"],
+textarea {
+  width: 100%;
+  height: 60px;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(124,58,237,0.4);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 800;
+  padding: 0 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="number"]:focus,
+input[type="text"]:focus,
+textarea:focus {
+  border-color: var(--pink);
+  box-shadow: var(--glow-pink);
+}
+input::placeholder, textarea::placeholder {
+  color: rgba(167,139,250,0.4);
+  font-weight: 400;
+  font-size: 16px;
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+textarea {
+  height: auto;
+  min-height: 80px;
+  padding: 14px 16px;
+  resize: vertical;
+  line-height: 1.5;
+  font-size: 18px;
+}
+
+/* ===== RESULT BOX ===== */
+.result-box {
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(16,185,129,0.4);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--emerald);
+  text-align: right;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-shadow: var(--glow-emerald);
+  word-break: break-all;
+  transition: all 0.3s;
+}
+.result-box.has-value {
+  background: rgba(16,185,129,0.08);
+  animation: resultPop 0.3s ease;
+}
+@keyframes resultPop {
+  0% { transform: scale(0.97); }
+  60% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* ===== FIELD LABEL ===== */
+.field-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  margin-bottom: 5px;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.94); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--pink), var(--purple));
+  color: white;
+  height: 56px;
+  padding: 0 24px;
+  width: 100%;
+  font-size: 18px;
+  box-shadow: var(--glow-pink);
+}
+.btn-primary:active { box-shadow: none; }
+
+.btn-calc {
+  background: linear-gradient(135deg, #4c1d95, var(--purple));
+  color: white;
+  height: 56px;
+  flex: 1;
+  font-size: 20px;
+  box-shadow: var(--glow-purple);
+}
+.btn-calc:active { box-shadow: none; }
+
+.btn-save {
+  background: linear-gradient(135deg, var(--emerald), var(--cyan));
+  color: #001a10;
+  height: 52px;
+  padding: 0 24px;
+  font-size: 17px;
+  box-shadow: var(--glow-emerald);
+  flex: 1;
+}
+.btn-save:active { box-shadow: none; }
+
+/* キャンセルボタン（編集モード時） */
+.btn-cancel {
+  background: rgba(239,68,68,0.15);
+  border: 1.5px solid rgba(239,68,68,0.4);
+  color: #fca5a5;
+  height: 52px;
+  padding: 0 18px;
+  font-size: 14px;
+  border-radius: 12px;
+}
+.btn-cancel:active { background: rgba(239,68,68,0.3); }
+
+.btn-outline {
+  background: transparent;
+  border: 1.5px solid rgba(167,139,250,0.5);
+  color: #c4b5fd;
+  height: 44px;
+  padding: 0 14px;
+}
+
+.btn-danger {
+  background: rgba(239,68,68,0.15);
+  border: 1.5px solid rgba(239,68,68,0.4);
+  color: #fca5a5;
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+.btn-danger:active { background: rgba(239,68,68,0.3); }
+
+.btn-edit {
+  background: rgba(124,58,237,0.2);
+  border: 1.5px solid rgba(124,58,237,0.4);
+  color: #c4b5fd;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+.btn-del {
+  background: rgba(239,68,68,0.15);
+  border: 1.5px solid rgba(239,68,68,0.35);
+  color: #fca5a5;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.btn-row-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ===== DIVIDER ===== */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(124,58,237,0.4), transparent);
+  margin: 14px 0;
+}
+
+/* ===== AB INPUTS ===== */
+.ab-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* ===== FILE INPUT ===== */
+.file-btn-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+.file-btn-wrapper input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  height: 100%;
+  width: 100%;
+}
+
+/* ===== PASTE ZONE ===== */
+.paste-zone {
+  min-height: 56px;
+  border: 2px dashed rgba(167,139,250,0.35);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  /* iOS でテキスト選択・ペーストを有効にする */
+  -webkit-user-select: text;
+  user-select: text;
+  /* contenteditable のデフォルトスタイルをリセット */
+  caret-color: transparent;
+  color: transparent;
+  font-size: 0;
+}
+.paste-zone:focus,
+.paste-zone.focused {
+  border-color: var(--pink);
+  background: rgba(236,72,153,0.06);
+  box-shadow: var(--glow-pink);
+}
+.paste-zone::before {
+  content: '📋  ここをタップ → 長押し → 「貼り付け」';
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+.paste-zone.focused::before {
+  color: var(--pink);
+  content: '📋  準備OK！長押し → 「貼り付け」を選択';
+}
+
+/* ===== IMAGE PREVIEW ===== */
+.img-preview-wrap {
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid rgba(16,185,129,0.3);
+  cursor: pointer;
+  display: none;
+}
+.img-preview-wrap.has-img { display: block; }
+.img-preview-wrap img {
+  width: 100%;
+  display: block;
+  max-height: 200px;
+  object-fit: cover;
+}
+
+/* ===== INLINE HISTORY ===== */
+.hist-section {
+  margin-top: 4px;
+}
+.hist-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.hist-section-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.history-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(124,58,237,0.2);
+  border-radius: 14px;
+  padding: 12px 14px;
+  transition: border-color 0.2s;
+}
+.history-item:hover { border-color: rgba(124,58,237,0.4); }
+
+/* 編集中ハイライト */
+.history-item.editing-active {
+  border-color: rgba(236,72,153,0.6);
+  background: rgba(236,72,153,0.05);
+}
+
+.hist-date {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+}
+.hist-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.hist-chip {
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.hist-chip.pct  { background: rgba(236,72,153,0.2); color: var(--pink); }
+.hist-chip.arith { background: rgba(124,58,237,0.2); color: #c4b5fd; }
+.hist-chip.result { background: rgba(16,185,129,0.2); color: var(--emerald); }
+
+.hist-memo {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+.hist-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(16,185,129,0.3);
+  margin-bottom: 8px;
+  display: block;
+}
+.hist-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.empty-state {
+  text-align: center;
+  color: rgba(167,139,250,0.4);
+  padding: 20px 0;
+  font-size: 13px;
+}
+
+/* ===== 編集バナー ===== */
+.edit-banner {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  background: rgba(236,72,153,0.12);
+  border: 1px solid rgba(236,72,153,0.4);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--pink);
+}
+.edit-banner.show { display: flex; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal-img {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 0 60px rgba(124,58,237,0.5);
+}
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: rgba(16,185,129,0.9);
+  color: #001a10;
+  font-weight: 800;
+  font-size: 14px;
+  padding: 12px 24px;
+  border-radius: 30px;
+  z-index: 2000;
+  transition: transform 0.3s, opacity 0.3s;
+  opacity: 0;
+  white-space: nowrap;
+  box-shadow: var(--glow-emerald);
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.error { background: rgba(239,68,68,0.9); color: white; box-shadow: 0 0 20px rgba(239,68,68,0.5); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <h1>✦ Percentage calculation memo ✦</h1>
+    <div class="pwa-status browser" id="pwaStatus">ブラウザ</div>
+  </header>
+
+  <!-- ================================================================
+       1) ％計算カード
+  ================================================================ -->
+  <section class="card card-percent">
+    <div class="card-title"><span class="icon">％</span> パーセント計算</div>
+
+    <!-- 編集中バナー -->
+    <div class="edit-banner" id="pctEditBanner">✏️ 編集モード — 変更して「保存」を押してください</div>
+
+    <div class="field-label">数字（BASE）</div>
+    <input type="number" id="pctBase" placeholder="例: 1000" inputmode="decimal">
+
+    <div style="height:10px"></div>
+
+    <div class="field-label">割合（%）</div>
+    <input type="number" id="pctValue" placeholder="例: 30" inputmode="decimal">
+
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-primary" onclick="calcPercent()">％ を計算</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field-label">計算結果</div>
+    <div class="result-box" id="pctResult">—</div>
+
+    <div class="divider"></div>
+
+    <!-- 保存ボタン行 -->
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn btn-save" onclick="savePct()">💾 保存</button>
+      <button class="btn btn-cancel" id="pctCancelBtn" onclick="cancelPctEdit()" style="display:none">✕ キャンセル</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ── ％履歴 ── -->
+    <div class="hist-section">
+      <div class="hist-section-header">
+        <span class="hist-section-title">📋 ％履歴</span>
+        <button class="btn btn-danger" onclick="clearAllPct()">全削除</button>
+      </div>
+      <div class="history-list" id="pctHistoryList">
+        <div class="empty-state">保存データなし</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       2) 四則演算カード
+  ================================================================ -->
+  <section class="card card-calc">
+    <div class="card-title">四則演算</div>
+
+    <!-- 編集中バナー -->
+    <div class="edit-banner" id="arithEditBanner">✏️ 編集モード — 変更して「保存」を押してください</div>
+
+    <div class="ab-inputs">
+      <div>
+        <div class="field-label">A</div>
+        <input type="number" id="calcA" placeholder="A" inputmode="decimal">
+      </div>
+      <div>
+        <div class="field-label">B</div>
+        <input type="number" id="calcB" placeholder="B" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="btn-row-4">
+      <button class="btn btn-calc" onclick="doCalc('+')">＋</button>
+      <button class="btn btn-calc" onclick="doCalc('-')">－</button>
+      <button class="btn btn-calc" onclick="doCalc('*')">×</button>
+      <button class="btn btn-calc" onclick="doCalc('/')">÷</button>
+    </div>
+
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn btn-outline" onclick="swapAB()" style="flex:1">⇄ A↔B</button>
+      <button class="btn btn-outline" onclick="clearA()" style="flex:1">A クリア</button>
+      <button class="btn btn-outline" onclick="clearB()" style="flex:1">B クリア</button>
+      <button class="btn btn-danger" onclick="clearArithInputs()" style="flex:1">全消去</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field-label">計算結果</div>
+    <div class="result-box" id="calcResult">—</div>
+    <div id="calcExpr" style="text-align:right;font-size:12px;color:var(--text-dim);margin-top:4px"></div>
+
+    <div class="divider"></div>
+
+    <!-- 保存ボタン行 -->
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn btn-save" onclick="saveArith()">💾 保存</button>
+      <button class="btn btn-cancel" id="arithCancelBtn" onclick="cancelArithEdit()" style="display:none">✕ キャンセル</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ── 四則演算履歴 ── -->
+    <div class="hist-section">
+      <div class="hist-section-header">
+        <span class="hist-section-title">📋 四則演算履歴</span>
+        <button class="btn btn-danger" onclick="clearAllArith()">全削除</button>
+      </div>
+      <div class="history-list" id="arithHistoryList">
+        <div class="empty-state">保存データなし</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       3) メモ＋画像カード
+  ================================================================ -->
+  <section class="card card-memo">
+    <div class="card-title"><span class="icon">📝</span> メモ＋画像</div>
+
+    <!-- 編集中バナー -->
+    <div class="edit-banner" id="memoEditBanner">✏️ 編集モード — 変更して「保存」を押してください</div>
+
+    <div class="field-label">メモ</div>
+    <textarea id="memoText" placeholder="メモを入力…"></textarea>
+
+    <div class="btn-row" style="margin-top:10px">
+      <div class="file-btn-wrapper btn btn-outline" style="flex:1;height:44px">
+        <span>📷 写真を選ぶ</span>
+        <input type="file" id="imgFile" accept="image/*" onchange="handleFileChange(event)">
+      </div>
+      <button class="btn btn-outline" onclick="clearImage()" style="flex:0 0 auto;height:44px;padding:0 14px">✕ 画像消去</button>
+    </div>
+
+    <!-- iPhoneの写真アプリからの貼り付け用ゾーン -->
+    <div id="pasteZone"
+         class="paste-zone"
+         contenteditable="true"
+         inputmode="none"
+         onpaste="handlePasteZone(event)"
+         onfocus="this.classList.add('focused')"
+         onblur="this.classList.remove('focused')"
+         onkeydown="event.preventDefault()"
+    ></div>
+
+    <div class="img-preview-wrap" id="imgPreviewWrap" onclick="openModal(currentImageDataUrl)">
+      <img id="imgPreview" src="" alt="プレビュー">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 保存ボタン行 -->
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn btn-save" onclick="saveMemo()">💾 保存</button>
+      <button class="btn btn-cancel" id="memoCancelBtn" onclick="cancelMemoEdit()" style="display:none">✕ キャンセル</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ── メモ履歴 ── -->
+    <div class="hist-section">
+      <div class="hist-section-header">
+        <span class="hist-section-title">📋 メモ履歴</span>
+        <button class="btn btn-danger" onclick="clearAllMemo()">全削除</button>
+      </div>
+      <div class="history-list" id="memoHistoryList">
+        <div class="empty-state">保存データなし</div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /app -->
+
+<!-- IMAGE MODAL -->
+<div class="modal-overlay" id="imgModal" onclick="closeModal()">
+  <button class="modal-close" onclick="closeModal()">✕</button>
+  <img class="modal-img" id="modalImg" src="" alt="">
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ============================================================
+// STORAGE KEYS
+// ============================================================
+const KEY_PCT   = 'galaxy_pct_v1';
+const KEY_ARITH = 'galaxy_arith_v1';
+const KEY_MEMO  = 'galaxy_memo_v1';
+
+// ============================================================
+// EDITING STATE  (null = 新規, string = 編集中ID)
+// ============================================================
+let pctEditId   = null;
+let arithEditId = null;
+let memoEditId  = null;
+
+let currentImageDataUrl = null;
+
+// ============================================================
+// PWA STATUS
+// ============================================================
+function updatePwaStatus() {
+  const el = document.getElementById('pwaStatus');
+  const isStandalone = window.navigator.standalone ||
+    window.matchMedia('(display-mode: standalone)').matches;
+  el.textContent = isStandalone ? '★ PWA: 有効' : 'ブラウザ';
+  el.className   = 'pwa-status ' + (isStandalone ? 'active' : 'browser');
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => updatePwaStatus())
+      .catch(err => console.warn('SW:', err));
+  });
+}
+updatePwaStatus();
+
+// ============================================================
+// STORAGE HELPERS
+// ============================================================
+function loadList(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || []; }
+  catch { return []; }
+}
+function saveList(key, list) {
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
+// ============================================================
+// GENERIC SAVE / DELETE / CLEAR
+// ============================================================
+function upsert(key, entry, editId) {
+  const list = loadList(key);
+  if (editId) {
+    const idx = list.findIndex(e => e.id === editId);
+    if (idx !== -1) {
+      entry.id        = editId;
+      entry.createdAt = list[idx].createdAt;
+      entry.updatedAt = new Date().toISOString();
+      list[idx]       = entry;
+      return { list, isNew: false };
+    }
+  }
+  entry.id        = Date.now().toString();
+  entry.createdAt = new Date().toISOString();
+  entry.updatedAt = null;
+  list.unshift(entry);
+  return { list, isNew: true };
+}
+
+function deleteItem(key, id, renderFn) {
+  if (!confirm('この記録を削除しますか？')) return;
+  saveList(key, loadList(key).filter(e => e.id !== id));
+  renderFn();
+  showToast('削除しました');
+}
+
+function clearAll(key, renderFn) {
+  if (!confirm('履歴をすべて削除しますか？\nこの操作は元に戻せません。')) return;
+  saveList(key, []);
+  renderFn();
+  showToast('全削除しました');
+}
+
+// ============================================================
+// 1) ％ CALCULATION
+// ============================================================
+function calcPercent() {
+  const base = parseFloat(document.getElementById('pctBase').value);
+  const pct  = parseFloat(document.getElementById('pctValue').value);
+  if (isNaN(base) || isNaN(pct)) { showToast('数値を入力してください', true); return; }
+
+  const result = base * (pct / 100);
+  const el = document.getElementById('pctResult');
+  el.textContent = formatNum(result);
+  el.classList.add('has-value');
+
+  document.getElementById('calcA').value = result;
+  showToast(`${formatNum(result)} を A にセットしました`);
+}
+
+function savePct() {
+  const base = document.getElementById('pctBase').value;
+  const pct  = document.getElementById('pctValue').value;
+  const res  = document.getElementById('pctResult').textContent;
+
+  if (!base && !pct) { showToast('数値を入力してください', true); return; }
+
+  const entry = { base, pct, result: res };
+  const { list, isNew } = upsert(KEY_PCT, entry, pctEditId);
+  saveList(KEY_PCT, list);
+
+  pctEditId = null;
+  setPctEditMode(false);
+  renderPctHistory();
+  showToast(isNew ? '保存しました' : '更新しました');
+}
+
+function cancelPctEdit() {
+  pctEditId = null;
+  setPctEditMode(false);
+  renderPctHistory();
+}
+
+function setPctEditMode(on) {
+  document.getElementById('pctEditBanner').classList.toggle('show', on);
+  document.getElementById('pctCancelBtn').style.display = on ? '' : 'none';
+  renderPctHistory();
+}
+
+function editPct(id) {
+  const entry = loadList(KEY_PCT).find(e => e.id === id);
+  if (!entry) return;
+
+  document.getElementById('pctBase').value  = entry.base  || '';
+  document.getElementById('pctValue').value = entry.pct   || '';
+
+  const el = document.getElementById('pctResult');
+  el.textContent = entry.result || '—';
+  el.classList.toggle('has-value', entry.result && entry.result !== '—');
+
+  pctEditId = id;
+  setPctEditMode(true);
+  scrollToSection('.card-percent');
+  showToast('編集モード');
+}
+
+function deletePct(id) { deleteItem(KEY_PCT, id, renderPctHistory); }
+function clearAllPct()  { clearAll(KEY_PCT, renderPctHistory); }
+
+function renderPctHistory() {
+  const list = loadList(KEY_PCT);
+  const el   = document.getElementById('pctHistoryList');
+  if (!list.length) { el.innerHTML = '<div class="empty-state">保存データなし</div>'; return; }
+
+  el.innerHTML = list.map(e => {
+    const active = pctEditId === e.id ? ' editing-active' : '';
+    return `
+    <div class="history-item${active}">
+      <div class="hist-date">${fmtDateStr(e.createdAt)}${e.updatedAt ? ' (更新: ' + fmtDateStr(e.updatedAt) + ')' : ''}</div>
+      <div class="hist-values">
+        <span class="hist-chip pct">${escHtml(e.base)} × ${escHtml(e.pct)}% = ${escHtml(e.result)}</span>
+      </div>
+      <div class="hist-actions">
+        <button class="btn btn-edit" onclick="editPct('${e.id}')">✏️ 編集</button>
+        <button class="btn btn-del"  onclick="deletePct('${e.id}')">🗑 削除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// 2) ARITHMETIC
+// ============================================================
+function doCalc(op) {
+  const a = parseFloat(document.getElementById('calcA').value);
+  const b = parseFloat(document.getElementById('calcB').value);
+  if (isNaN(a) || isNaN(b)) { showToast('A と B を入力してください', true); return; }
+  if (op === '/' && b === 0) { showToast('ゼロ除算はできません', true); return; }
+
+  const syms = { '+': '＋', '-': '－', '*': '×', '/': '÷' };
+  let result;
+  switch(op) {
+    case '+': result = a + b; break;
+    case '-': result = a - b; break;
+    case '*': result = a * b; break;
+    case '/': result = a / b; break;
+  }
+
+  const el = document.getElementById('calcResult');
+  el.textContent = formatNum(result);
+  el.classList.add('has-value');
+  document.getElementById('calcExpr').textContent =
+    `${formatNum(a)} ${syms[op]} ${formatNum(b)} ＝ ${formatNum(result)}`;
+}
+
+function swapAB() {
+  const a = document.getElementById('calcA');
+  const b = document.getElementById('calcB');
+  [a.value, b.value] = [b.value, a.value];
+}
+function clearA() { document.getElementById('calcA').value = ''; }
+function clearB() { document.getElementById('calcB').value = ''; }
+function clearArithInputs() {
+  document.getElementById('calcA').value = '';
+  document.getElementById('calcB').value = '';
+  const r = document.getElementById('calcResult');
+  r.textContent = '—';
+  r.classList.remove('has-value');
+  document.getElementById('calcExpr').textContent = '';
+}
+
+function saveArith() {
+  const a    = document.getElementById('calcA').value;
+  const b    = document.getElementById('calcB').value;
+  const res  = document.getElementById('calcResult').textContent;
+  const expr = document.getElementById('calcExpr').textContent;
+
+  if (!a && !b) { showToast('A か B を入力してください', true); return; }
+
+  const entry = { a, b, result: res, expr };
+  const { list, isNew } = upsert(KEY_ARITH, entry, arithEditId);
+  saveList(KEY_ARITH, list);
+
+  arithEditId = null;
+  setArithEditMode(false);
+  renderArithHistory();
+  showToast(isNew ? '保存しました' : '更新しました');
+}
+
+function cancelArithEdit() {
+  arithEditId = null;
+  setArithEditMode(false);
+  renderArithHistory();
+}
+
+function setArithEditMode(on) {
+  document.getElementById('arithEditBanner').classList.toggle('show', on);
+  document.getElementById('arithCancelBtn').style.display = on ? '' : 'none';
+  renderArithHistory();
+}
+
+function editArith(id) {
+  const entry = loadList(KEY_ARITH).find(e => e.id === id);
+  if (!entry) return;
+
+  document.getElementById('calcA').value = entry.a || '';
+  document.getElementById('calcB').value = entry.b || '';
+
+  const el = document.getElementById('calcResult');
+  el.textContent = entry.result || '—';
+  el.classList.toggle('has-value', entry.result && entry.result !== '—');
+  document.getElementById('calcExpr').textContent = entry.expr || '';
+
+  arithEditId = id;
+  setArithEditMode(true);
+  scrollToSection('.card-calc');
+  showToast('編集モード');
+}
+
+function deleteArith(id) { deleteItem(KEY_ARITH, id, renderArithHistory); }
+function clearAllArith()  { clearAll(KEY_ARITH, renderArithHistory); }
+
+function renderArithHistory() {
+  const list = loadList(KEY_ARITH);
+  const el   = document.getElementById('arithHistoryList');
+  if (!list.length) { el.innerHTML = '<div class="empty-state">保存データなし</div>'; return; }
+
+  el.innerHTML = list.map(e => {
+    const active = arithEditId === e.id ? ' editing-active' : '';
+    const chip = e.expr
+      ? `<span class="hist-chip arith">${escHtml(e.expr)}</span>`
+      : `<span class="hist-chip result">結果: ${escHtml(e.result)}</span>`;
+    return `
+    <div class="history-item${active}">
+      <div class="hist-date">${fmtDateStr(e.createdAt)}${e.updatedAt ? ' (更新: ' + fmtDateStr(e.updatedAt) + ')' : ''}</div>
+      <div class="hist-values">${chip}</div>
+      <div class="hist-actions">
+        <button class="btn btn-edit" onclick="editArith('${e.id}')">✏️ 編集</button>
+        <button class="btn btn-del"  onclick="deleteArith('${e.id}')">🗑 削除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// 3) MEMO + IMAGE
+// ============================================================
+function handleFileChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  compressImage(file, setImage);
+}
+
+// ペーストゾーン専用ハンドラ（iPhone Photos 対応）
+function handlePasteZone(event) {
+  event.preventDefault();
+  // contenteditable の中身はクリア
+  const zone = document.getElementById('pasteZone');
+  zone.innerHTML = '';
+
+  const cd = event.clipboardData || (event.originalEvent && event.originalEvent.clipboardData);
+  if (!cd) return;
+
+  // まず画像を探す
+  let imgItem = null;
+  for (const item of cd.items) {
+    if (item.type.startsWith('image/')) { imgItem = item; break; }
+  }
+
+  if (imgItem) {
+    const file = imgItem.getAsFile();
+    if (file) {
+      compressImage(file, (dataUrl) => {
+        setImage(dataUrl);
+        zone.blur();
+        showToast('写真を貼り付けました');
+      });
+    }
+    return;
+  }
+
+  // 画像が無ければテキストをメモ欄へ（おまけ）
+  const text = cd.getData('text/plain');
+  if (text) {
+    const ta = document.getElementById('memoText');
+    ta.value += text;
+    ta.focus();
+  }
+}
+
+// デスクトップ（Chrome等）でのドキュメント全体ペーストはフォールバックとして残す
+document.addEventListener('paste', (e) => {
+  // ペーストゾーンにフォーカスがある場合は handlePasteZone に任せる
+  if (document.activeElement && document.activeElement.id === 'pasteZone') return;
+  const cd = e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData);
+  if (!cd) return;
+  for (const item of cd.items) {
+    if (item.type.startsWith('image/')) {
+      compressImage(item.getAsFile(), (dataUrl) => {
+        setImage(dataUrl);
+        showToast('画像を貼り付けました');
+      });
+      break;
+    }
+  }
+});
+
+function setImage(dataUrl) {
+  currentImageDataUrl = dataUrl;
+  document.getElementById('imgPreview').src = dataUrl;
+  document.getElementById('imgPreviewWrap').classList.add('has-img');
+}
+
+function clearImage() {
+  currentImageDataUrl = null;
+  document.getElementById('imgPreview').src = '';
+  document.getElementById('imgPreviewWrap').classList.remove('has-img');
+  document.getElementById('imgFile').value = '';
+  document.getElementById('pasteZone').innerHTML = '';
+}
+
+function compressImage(file, callback) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1280;
+      let w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      else if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.83));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveMemo() {
+  const text = document.getElementById('memoText').value;
+  if (!text && !currentImageDataUrl) { showToast('メモか画像を入力してください', true); return; }
+
+  const entry = { memo: text, image: currentImageDataUrl };
+  const { list, isNew } = upsert(KEY_MEMO, entry, memoEditId);
+  saveList(KEY_MEMO, list);
+
+  memoEditId = null;
+  setMemoEditMode(false);
+  renderMemoHistory();
+  showToast(isNew ? '保存しました' : '更新しました');
+}
+
+function cancelMemoEdit() {
+  memoEditId = null;
+  setMemoEditMode(false);
+  renderMemoHistory();
+}
+
+function setMemoEditMode(on) {
+  document.getElementById('memoEditBanner').classList.toggle('show', on);
+  document.getElementById('memoCancelBtn').style.display = on ? '' : 'none';
+  renderMemoHistory();
+}
+
+function editMemo(id) {
+  const entry = loadList(KEY_MEMO).find(e => e.id === id);
+  if (!entry) return;
+
+  document.getElementById('memoText').value = entry.memo || '';
+  if (entry.image) { setImage(entry.image); } else { clearImage(); }
+
+  memoEditId = id;
+  setMemoEditMode(true);
+  scrollToSection('.card-memo');
+  showToast('編集モード');
+}
+
+function deleteMemo(id) { deleteItem(KEY_MEMO, id, renderMemoHistory); }
+function clearAllMemo()  { clearAll(KEY_MEMO, renderMemoHistory); }
+
+function renderMemoHistory() {
+  const list = loadList(KEY_MEMO);
+  const el   = document.getElementById('memoHistoryList');
+  if (!list.length) { el.innerHTML = '<div class="empty-state">保存データなし</div>'; return; }
+
+  el.innerHTML = list.map(e => {
+    const active = memoEditId === e.id ? ' editing-active' : '';
+    const memo   = e.memo  ? `<div class="hist-memo">${escHtml(e.memo)}</div>` : '';
+    const img    = e.image
+      ? `<img class="hist-thumb" src="${e.image}" alt="画像" onclick="openModal('${e.image.replace(/'/g,"\\'")}')">` : '';
+    return `
+    <div class="history-item${active}">
+      <div class="hist-date">${fmtDateStr(e.createdAt)}${e.updatedAt ? ' (更新: ' + fmtDateStr(e.updatedAt) + ')' : ''}</div>
+      ${memo}${img}
+      <div class="hist-actions">
+        <button class="btn btn-edit" onclick="editMemo('${e.id}')">✏️ 編集</button>
+        <button class="btn btn-del"  onclick="deleteMemo('${e.id}')">🗑 削除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// IMAGE MODAL
+// ============================================================
+function openModal(src) {
+  document.getElementById('modalImg').src = src;
+  document.getElementById('imgModal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('imgModal').classList.remove('show');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function showToast(msg, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (isError ? ' error' : '');
+  requestAnimationFrame(() => el.classList.add('show'));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function formatNum(n) {
+  if (!isFinite(n)) return 'エラー';
+  return parseFloat(n.toFixed(10)).toLocaleString('ja-JP', { maximumFractionDigits: 10 });
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function fmtDateStr(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function escHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function scrollToSection(selector) {
+  const el = document.querySelector(selector);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderPctHistory();
+renderArithHistory();
+renderMemoHistory();
+</script>
+</body>
+</html>
