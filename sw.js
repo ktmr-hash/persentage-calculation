@@ -1,8 +1,9 @@
-const CACHE_NAME = 'galaxy-calc-v2';
+const CACHE_NAME = 'galaxy-calc-v4';
 const URLS_TO_CACHE = [
   './index.html',
   './manifest.webmanifest',
-  './sw.js'
+  './sw.js',
+  './icon.png'
 ];
 
 // インストール：必要なファイルをキャッシュ
