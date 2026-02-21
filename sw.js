@@ -1,4 +1,4 @@
-const CACHE_NAME = 'galaxy-calc-v4';
+const CACHE_NAME = 'galaxy-calc-v7';
 const URLS_TO_CACHE = [
   './index.html',
   './manifest.webmanifest',

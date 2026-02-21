@@ -200,6 +200,12 @@ textarea {
   resize: vertical;
   line-height: 1.5;
   font-size: 18px;
+  /* iOS Safari でテキスト入力を確実に有効化 */
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+  cursor: text;
+  touch-action: manipulation;
 }
 
 /* ===== RESULT BOX ===== */
@@ -381,60 +387,97 @@ textarea {
   width: 100%;
 }
 
-/* ===== PASTE ZONE ===== */
-.paste-zone {
-  min-height: 56px;
-  border: 2px dashed rgba(167,139,250,0.35);
-  border-radius: 12px;
+/* ===== PASTE ZONE（textarea ベース） ===== */
+/* 一般 textarea スタイルを上書き */
+#pasteZone {
+  height: 56px !important;
+  min-height: 56px !important;
+  padding: 0 12px !important;
+  resize: none !important;
+  overflow: hidden !important;
+  border: 2px dashed rgba(236,72,153,0.35) !important;
+  border-radius: 12px !important;
+  margin-top: 10px !important;
+  cursor: pointer !important;
+  outline: none !important;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s !important;
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  touch-action: manipulation !important;
+  /* テキストは不可視にして caret だけ見せる（iOS が Paste を表示する条件） */
+  color: rgba(0,0,0,0) !important;
+  caret-color: var(--pink) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  line-height: 56px !important;
+  background: rgba(255,255,255,0.02) !important;
+}
+#pasteZone:focus,
+#pasteZone.focused {
+  border-color: var(--pink) !important;
+  background: rgba(236,72,153,0.06) !important;
+  box-shadow: var(--glow-pink) !important;
+}
+#pasteZone::placeholder {
+  color: var(--text-dim);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: normal;
+  -webkit-text-fill-color: var(--text-dim);
+}
+#pasteZone:focus::placeholder,
+#pasteZone.focused::placeholder {
+  color: var(--pink);
+  -webkit-text-fill-color: var(--pink);
+}
+
+/* ===== MULTI IMAGE GRID ===== */
+.current-images-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.current-img-item {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+}
+.current-img-item img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1.5px solid rgba(16,185,129,0.4);
+  cursor: pointer;
+  display: block;
+  box-shadow: var(--glow-emerald);
+}
+.current-img-remove {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 22px;
+  height: 22px;
+  background: rgba(239,68,68,0.92);
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,0.3);
+  color: white;
+  font-size: 13px;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 10px;
   cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-  /* iOS でテキスト選択・ペーストを有効にする */
-  -webkit-user-select: text;
-  user-select: text;
-  /* contenteditable のデフォルトスタイルをリセット */
-  caret-color: transparent;
-  color: transparent;
-  font-size: 0;
+  -webkit-tap-highlight-color: transparent;
 }
-.paste-zone:focus,
-.paste-zone.focused {
-  border-color: var(--pink);
-  background: rgba(236,72,153,0.06);
-  box-shadow: var(--glow-pink);
-}
-.paste-zone::before {
-  content: '📋  ここをタップ → 長押し → 「貼り付け」';
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-dim);
-  pointer-events: none;
-}
-.paste-zone.focused::before {
-  color: var(--pink);
-  content: '📋  準備OK！長押し → 「貼り付け」を選択';
-}
-
-/* ===== IMAGE PREVIEW ===== */
-.img-preview-wrap {
-  margin-top: 12px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1.5px solid rgba(16,185,129,0.3);
-  cursor: pointer;
-  display: none;
-}
-.img-preview-wrap.has-img { display: block; }
-.img-preview-wrap img {
-  width: 100%;
-  display: block;
-  max-height: 200px;
-  object-fit: cover;
+.hist-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 /* ===== INLINE HISTORY ===== */
@@ -616,7 +659,7 @@ textarea {
        1) ％計算カード
   ================================================================ -->
   <section class="card card-percent">
-    <div class="card-title"><span class="icon">％</span> パーセント計算</div>
+    <div class="card-title"><span class="icon">％</span> 計算</div>
 
     <!-- 編集中バナー -->
     <div class="edit-banner" id="pctEditBanner">✏️ 編集モード — 変更して「保存」を押してください</div>
@@ -732,30 +775,34 @@ textarea {
     <div class="edit-banner" id="memoEditBanner">✏️ 編集モード — 変更して「保存」を押してください</div>
 
     <div class="field-label">メモ</div>
-    <textarea id="memoText" placeholder="メモを入力…"></textarea>
+    <textarea id="memoText"
+              placeholder="メモを入力…"
+              autocomplete="off"
+              autocorrect="on"
+              autocapitalize="sentences"
+              onclick="this.focus()"
+    ></textarea>
 
     <div class="btn-row" style="margin-top:10px">
       <div class="file-btn-wrapper btn btn-outline" style="flex:1;height:44px">
         <span>📷 写真を選ぶ</span>
-        <input type="file" id="imgFile" accept="image/*" onchange="handleFileChange(event)">
+        <input type="file" id="imgFile" accept="image/*" multiple onchange="handleFileChange(event)">
       </div>
-      <button class="btn btn-outline" onclick="clearImage()" style="flex:0 0 auto;height:44px;padding:0 14px">✕ 画像消去</button>
+      <button class="btn btn-outline" onclick="clearImages()" style="flex:0 0 auto;height:44px;padding:0 14px">✕ 全消去</button>
     </div>
 
     <!-- iPhoneの写真アプリからの貼り付け用ゾーン -->
-    <div id="pasteZone"
-         class="paste-zone"
-         contenteditable="true"
-         inputmode="none"
-         onpaste="handlePasteZone(event)"
-         onfocus="this.classList.add('focused')"
-         onblur="this.classList.remove('focused')"
-         onkeydown="event.preventDefault()"
-    ></div>
+    <textarea id="pasteZone"
+              inputmode="none"
+              placeholder="📋 長押し → 貼り付け（写真ペースト用）"
+              onpaste="handlePasteZone(event)"
+              onfocus="this.classList.add('focused')"
+              onblur="this.classList.remove('focused')"
+              onkeydown="event.preventDefault()"
+    ></textarea>
 
-    <div class="img-preview-wrap" id="imgPreviewWrap" onclick="openModal(currentImageDataUrl)">
-      <img id="imgPreview" src="" alt="プレビュー">
-    </div>
+    <!-- 複数画像プレビューグリッド -->
+    <div class="current-images-wrap" id="currentImagesWrap"></div>
 
     <div class="divider"></div>
 
@@ -807,7 +854,7 @@ let pctEditId   = null;
 let arithEditId = null;
 let memoEditId  = null;
 
-let currentImageDataUrl = null;
+let currentImages = []; // 複数画像対応（DataURL の配列）
 
 // ============================================================
 // PWA STATUS
@@ -1078,43 +1125,50 @@ function renderArithHistory() {
 }
 
 // ============================================================
-// 3) MEMO + IMAGE
+// 3) MEMO + IMAGE（複数画像対応）
 // ============================================================
 function handleFileChange(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  compressImage(file, setImage);
+  const files = Array.from(event.target.files);
+  if (!files.length) return;
+  let pending = files.length;
+  files.forEach(file => {
+    compressImage(file, (dataUrl) => {
+      addImage(dataUrl);
+      pending--;
+      if (pending === 0) showToast(`${files.length}枚追加しました`);
+    });
+  });
+  event.target.value = ''; // 同じファイルを再選択できるようリセット
 }
 
 // ペーストゾーン専用ハンドラ（iPhone Photos 対応）
 function handlePasteZone(event) {
   event.preventDefault();
-  // contenteditable の中身はクリア
   const zone = document.getElementById('pasteZone');
   zone.innerHTML = '';
 
   const cd = event.clipboardData || (event.originalEvent && event.originalEvent.clipboardData);
   if (!cd) return;
 
-  // まず画像を探す
-  let imgItem = null;
+  let found = false;
   for (const item of cd.items) {
-    if (item.type.startsWith('image/')) { imgItem = item; break; }
-  }
-
-  if (imgItem) {
-    const file = imgItem.getAsFile();
-    if (file) {
-      compressImage(file, (dataUrl) => {
-        setImage(dataUrl);
-        zone.blur();
-        showToast('写真を貼り付けました');
-      });
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      if (file) {
+        compressImage(file, (dataUrl) => {
+          addImage(dataUrl);
+          showToast('写真を貼り付けました');
+          zone.value = '';
+          setTimeout(focusPasteZone, 80); // 連続貼り付け対応
+        });
+        found = true;
+      }
     }
-    return;
   }
+  zone.value = '';
+  if (found) return;
 
-  // 画像が無ければテキストをメモ欄へ（おまけ）
+  // 画像が無ければテキストをメモ欄へ
   const text = cd.getData('text/plain');
   if (text) {
     const ta = document.getElementById('memoText');
@@ -1123,35 +1177,47 @@ function handlePasteZone(event) {
   }
 }
 
-// デスクトップ（Chrome等）でのドキュメント全体ペーストはフォールバックとして残す
+// デスクトップ用フォールバック
 document.addEventListener('paste', (e) => {
-  // ペーストゾーンにフォーカスがある場合は handlePasteZone に任せる
   if (document.activeElement && document.activeElement.id === 'pasteZone') return;
   const cd = e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData);
   if (!cd) return;
   for (const item of cd.items) {
     if (item.type.startsWith('image/')) {
       compressImage(item.getAsFile(), (dataUrl) => {
-        setImage(dataUrl);
-        showToast('画像を貼り付けました');
+        addImage(dataUrl);
+        showToast('画像を追加しました');
       });
       break;
     }
   }
 });
 
-function setImage(dataUrl) {
-  currentImageDataUrl = dataUrl;
-  document.getElementById('imgPreview').src = dataUrl;
-  document.getElementById('imgPreviewWrap').classList.add('has-img');
+function addImage(dataUrl) {
+  currentImages.push(dataUrl);
+  renderCurrentImages();
 }
 
-function clearImage() {
-  currentImageDataUrl = null;
-  document.getElementById('imgPreview').src = '';
-  document.getElementById('imgPreviewWrap').classList.remove('has-img');
+function removeImage(index) {
+  currentImages.splice(index, 1);
+  renderCurrentImages();
+}
+
+function clearImages() {
+  currentImages = [];
   document.getElementById('imgFile').value = '';
-  document.getElementById('pasteZone').innerHTML = '';
+  document.getElementById('pasteZone').value = '';
+  renderCurrentImages();
+}
+
+function renderCurrentImages() {
+  const wrap = document.getElementById('currentImagesWrap');
+  if (!currentImages.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = currentImages.map((src, i) => `
+    <div class="current-img-item">
+      <img src="${src}" alt="画像${i+1}" onclick="openModal('${src.replace(/'/g,"\\'")}')">
+      <button class="current-img-remove" onclick="removeImage(${i})" title="削除">✕</button>
+    </div>`).join('');
 }
 
 function compressImage(file, callback) {
@@ -1175,9 +1241,9 @@ function compressImage(file, callback) {
 
 function saveMemo() {
   const text = document.getElementById('memoText').value;
-  if (!text && !currentImageDataUrl) { showToast('メモか画像を入力してください', true); return; }
+  if (!text && !currentImages.length) { showToast('メモか画像を入力してください', true); return; }
 
-  const entry = { memo: text, image: currentImageDataUrl };
+  const entry = { memo: text, images: [...currentImages] };
   const { list, isNew } = upsert(KEY_MEMO, entry, memoEditId);
   saveList(KEY_MEMO, list);
 
@@ -1189,6 +1255,8 @@ function saveMemo() {
 
 function cancelMemoEdit() {
   memoEditId = null;
+  currentImages = [];
+  renderCurrentImages();
   setMemoEditMode(false);
   renderMemoHistory();
 }
@@ -1204,7 +1272,16 @@ function editMemo(id) {
   if (!entry) return;
 
   document.getElementById('memoText').value = entry.memo || '';
-  if (entry.image) { setImage(entry.image); } else { clearImage(); }
+
+  // 旧フォーマット（image: 単一）と新フォーマット（images: 配列）の両対応
+  if (entry.images && entry.images.length) {
+    currentImages = [...entry.images];
+  } else if (entry.image) {
+    currentImages = [entry.image];
+  } else {
+    currentImages = [];
+  }
+  renderCurrentImages();
 
   memoEditId = id;
   setMemoEditMode(true);
@@ -1222,13 +1299,22 @@ function renderMemoHistory() {
 
   el.innerHTML = list.map(e => {
     const active = memoEditId === e.id ? ' editing-active' : '';
-    const memo   = e.memo  ? `<div class="hist-memo">${escHtml(e.memo)}</div>` : '';
-    const img    = e.image
-      ? `<img class="hist-thumb" src="${e.image}" alt="画像" onclick="openModal('${e.image.replace(/'/g,"\\'")}')">` : '';
+    const memo   = e.memo ? `<div class="hist-memo">${escHtml(e.memo)}</div>` : '';
+
+    // 旧フォーマット（image）・新フォーマット（images）の両対応
+    const imgs = e.images && e.images.length ? e.images
+               : e.image ? [e.image] : [];
+    const thumbs = imgs.length
+      ? `<div class="hist-thumbs">${imgs.map(src =>
+          `<img class="hist-thumb" src="${src}" alt="画像"
+               onclick="openModal('${src.replace(/'/g,"\\'")}')
+               ">`).join('')}</div>`
+      : '';
+
     return `
     <div class="history-item${active}">
       <div class="hist-date">${fmtDateStr(e.createdAt)}${e.updatedAt ? ' (更新: ' + fmtDateStr(e.updatedAt) + ')' : ''}</div>
-      ${memo}${img}
+      ${memo}${thumbs}
       <div class="hist-actions">
         <button class="btn btn-edit" onclick="editMemo('${e.id}')">✏️ 編集</button>
         <button class="btn btn-del"  onclick="deleteMemo('${e.id}')">🗑 削除</button>
@@ -1290,11 +1376,30 @@ function scrollToSection(selector) {
 }
 
 // ============================================================
+// PASTE ZONE フォーカス管理
+// ============================================================
+function focusPasteZone() {
+  const zone = document.getElementById('pasteZone');
+  if (zone) zone.focus({ preventScroll: true });
+}
+
+// textarea からフォーカスが外れたら paste zone に戻す
+document.getElementById('memoText').addEventListener('blur', () => {
+  setTimeout(focusPasteZone, 150);
+});
+
+// ============================================================
 // INIT
 // ============================================================
 renderPctHistory();
 renderArithHistory();
 renderMemoHistory();
+
+// ページ読み込み完了後すぐに paste zone をフォーカス
+// （inputmode="none" のためキーボードは出ない）
+window.addEventListener('load', () => {
+  setTimeout(focusPasteZone, 300);
+});
 </script>
 </body>
 </html>
